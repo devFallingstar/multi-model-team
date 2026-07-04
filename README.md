@@ -42,6 +42,7 @@ it can't handle. **MMT gives each kind of work to the model that fits it.**
 | **Orchestrator** (main session) | **Opus 4.8** or **Fable 5** — you choose (`/orchestrator-model`) | Planning, delegation, and synthesis **only**. Does not implement. |
 | `reasoner` subagent | Opus, fixed (`model: opus`, `effort: max`) | Hard debugging, algorithm & architecture design, "why does this happen" questions. |
 | `worker` subagent | Sonnet, fixed (`model: sonnet`, `effort: medium`) | Boilerplate, tests, formatting/lint, repetitive edits, simple well-specified fixes. |
+| `reviewer` subagent | Opus, fixed (`model: opus`, `effort: high`), read-only | Reviews a finished diff before commit — correctness, edge cases, security. Returns problems only; the orchestrator routes the fixes back to reasoner/worker. |
 
 The `orchestration-protocol` skill enforces these roles. It triggers automatically on
 coding, design, and debugging requests, making the orchestrator delegate instead of
@@ -89,7 +90,7 @@ Verify it loaded:
 
 ```bash
 claude plugin details multi-model-team@multi-model-team-marketplace
-# Agents (2) reasoner, worker · Hooks (1) SessionStart · + commands & skill
+# Agents (3) reasoner, worker, reviewer · Hooks (1) SessionStart · + commands & skill
 ```
 
 ---
@@ -105,6 +106,8 @@ Have reasoner analyze the root cause of this race condition.
 Ask worker to generate test skeletons for these functions.
 ```
 
+Run `/team-status` anytime to see the saved orchestrator model and the current team.
+
 ### Run the full orchestration workflow
 
 ```
@@ -113,9 +116,11 @@ Ask worker to generate test skeletons for these functions.
 
 Internally this runs:
 
-1. **Plan** — the orchestrator breaks the request into `[reasoner]` / `[worker]` subtasks and shows you the split.
+1. **Plan** — the orchestrator breaks the request into `[reasoner]` / `[worker]` / `[reviewer]` subtasks and shows you the split.
 2. **Delegate** — independent subtasks go out in parallel, dependent ones are chained. The orchestrator never implements directly.
 3. **Synthesize** — all results are merged into one coherent answer with next steps.
+
+Add `--plan-only` to stop after the plan for your approval before any delegation (e.g. `/orchestrate --plan-only <task>`).
 
 ---
 
@@ -154,17 +159,22 @@ multi-model-team/
 │   └── marketplace.json     # self-referencing marketplace for local install
 ├── agents/
 │   ├── reasoner.md      # model: opus, effort: max
-│   └── worker.md        # model: sonnet, effort: medium
+│   ├── worker.md        # model: sonnet, effort: medium
+│   └── reviewer.md      # model: opus, effort: high, read-only
 ├── skills/
 │   └── orchestration-protocol/SKILL.md   # role-separation rules, auto-trigger
 ├── commands/
-│   ├── orchestrate.md        # /orchestrate <task>
-│   └── orchestrator-model.md # /orchestrator-model [opus|fable]
+│   ├── orchestrate.md        # /orchestrate <task> [--plan-only]
+│   ├── orchestrator-model.md # /orchestrator-model [opus|fable]
+│   └── team-status.md        # /team-status
 ├── hooks/
 │   ├── hooks.json            # registers the SessionStart hook
 │   └── session-start-reminder.js   # Node script — no bash/python deps, cross-platform
+├── evals/                    # provisional `claude plugin eval` suite
+├── .github/                  # CI workflow
 ├── LICENSE
-└── README.md
+├── README.md
+└── CHANGELOG.md
 ```
 
 The SessionStart hook is a **Node** script (Claude Code ships with Node), so it runs

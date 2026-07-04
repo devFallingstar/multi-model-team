@@ -8,7 +8,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const settingsFile = path.join('.claude', 'settings.local.json');
+const base = process.env.CLAUDE_PROJECT_DIR || '.';
+const settingsFile = path.join(base, '.claude', 'settings.local.json');
 
 let model = '';
 let effort = '';

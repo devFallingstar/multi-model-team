@@ -1,10 +1,13 @@
 {
   "name": "multi-model-team",
-  "version": "1.0.0",
+  "displayName": "Multi Model Team (MMT)",
+  "version": "1.1.0",
   "description": "Opus 4.8 또는 Fable 5 오케스트레이터가 계획/작업분배/결과종합만 담당하고, 어려운 추론은 Opus 고정 서브에이전트(reasoner)에게, 잡일은 Sonnet 고정 서브에이전트(worker)에게 위임하는 멀티모델 팀 구성 플러그인.",
   "author": {
     "name": "유성"
   },
+  "homepage": "https://github.com/devFallingstar/multi-model-team",
+  "repository": "https://github.com/devFallingstar/multi-model-team",
   "license": "MIT",
   "keywords": ["orchestration", "multi-model", "subagents", "fable", "opus", "sonnet"]
 }

@@ -9,6 +9,7 @@ description: >
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 effort: medium
+maxTurns: 20
 ---
 
 You are worker, a fast and reliable executor for well-specified,
