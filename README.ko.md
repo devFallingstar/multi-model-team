@@ -7,8 +7,8 @@
 **다른 언어로 보기: [English](README.md) · [한국어](README.ko.md)**
 
 > 작업을 **모델들의 팀**에게 나눠 맡기는 Claude Code 플러그인 — 오케스트레이터는
-> 계획과 분배만 하고, Opus 전문가가 어려운 추론을, Sonnet 워커가 기계적인 작업을
-> 담당합니다. 알맞은 모델에게 알맞은 일을.
+> 계획과 분배를, Opus 전문가가 어려운 추론을, Sonnet 워커가 기계적인 작업을,
+> Opus 리뷰어가 커밋 전 결과 검토를 담당합니다. 알맞은 모델에게 알맞은 일을.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-5A67D8)
@@ -19,7 +19,7 @@
 
 **MMT(Multi Model Team)** 는 하나의 세션을 모델들의 팀으로 바꾸는 Claude Code
 플러그인입니다. 오케스트레이터가 계획과 분배를 맡고, Opus 에이전트가 어려운 추론을,
-Sonnet 에이전트가 기계적인 작업을 담당합니다.
+Sonnet 에이전트가 기계적인 작업을, Opus 리뷰어가 커밋 전 검토를 담당합니다.
 
 이런 구조가 필요한 이유: 모델 하나가 모든 작업을 처리하면 어딘가에서 손해를 봅니다.
 최상위 모델이 단순한 보일러플레이트에 비싼 토큰을 쓰거나, 저렴한 모델이 감당 못 할
@@ -187,7 +187,7 @@ SessionStart 훅은 **Node** 스크립트입니다(Claude Code에 Node가 기본
   effort 값: `low` / `medium` / `high` / `xhigh` / `max` (모델별 지원 범위 다름).
 - `reasoner`에 `isolation: worktree`를 추가하면 별도 git worktree에서 안전하게
   실험하게 할 수 있습니다.
-- 각 에이전트의 `tools`를 좁혀(예: 리뷰 전용 에이전트는 `Read, Grep, Glob`만) 권한을
+- 각 에이전트의 `tools`를 좁혀(예: 문서 전용 에이전트는 `Read, Grep, Glob`만) 권한을
   최소화할 수 있습니다.
 - 유효한 `model` 별칭: `sonnet`, `opus`, `haiku`, `fable` (또는 전체 모델 ID, 또는 `inherit`).
 

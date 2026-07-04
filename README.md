@@ -7,8 +7,9 @@
 **Read this in other languages: [English](README.md) · [한국어](README.ko.md)**
 
 > A Claude Code plugin that splits work across a **team of models** — a high-level
-> orchestrator plans and delegates, an Opus specialist does the hard reasoning, and
-> a Sonnet worker handles the mechanical work. Right model for the right job.
+> orchestrator plans and delegates, an Opus specialist does the hard reasoning,
+> a Sonnet worker handles the mechanical work, and an Opus reviewer checks the result
+> before commit. Right model for the right job.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-5A67D8)
@@ -19,7 +20,8 @@
 
 **MMT (Multi Model Team)** is a Claude Code plugin that turns one session into a team
 of models: an orchestrator plans and delegates, an Opus agent handles hard reasoning,
-and a Sonnet agent handles mechanical work.
+a Sonnet agent handles mechanical work, and an Opus reviewer checks finished work
+before commit.
 
 It exists because a single model doing everything overpays somewhere: a top-tier model
 wastes expensive tokens on boilerplate, or a cheap model makes architecture decisions
@@ -188,7 +190,7 @@ identically on Windows, macOS, and Linux with no `bash` or `python3` dependency.
   levels: `low` / `medium` / `high` / `xhigh` / `max` (availability depends on the model).
 - Add `isolation: worktree` to `reasoner` to let it experiment safely in a separate
   git worktree.
-- Narrow each agent's `tools` (e.g. a review-only agent gets just `Read, Grep, Glob`) to
+- Narrow each agent's `tools` (e.g. a docs-only agent gets just `Read, Grep, Glob`) to
   minimize its permissions.
 - Valid `model` aliases: `sonnet`, `opus`, `haiku`, `fable` (or a full model ID, or `inherit`).
 
