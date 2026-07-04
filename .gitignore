@@ -1,0 +1,9 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Local Claude Code state (프로젝트별 로컬 설정 — 배포하지 않음)
+.claude/settings.local.json
