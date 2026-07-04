@@ -15,18 +15,17 @@
 
 ## Why use this?
 
-When one model handles an entire task, you're always paying the wrong price somewhere:
-a top-tier model burns expensive, high-effort tokens writing boilerplate, or a cheap
-model makes a bad architectural call it wasn't equipped for. **MMT fixes the
-allocation problem** by assigning each kind of work to the model that fits it.
+When a single model does everything, you overpay somewhere: a top-tier model wastes
+expensive tokens on boilerplate, or a cheap model makes architecture decisions it
+can't handle. **MMT fixes this by giving each kind of work to the model that fits it.**
 
 | Benefit | How MMT delivers it |
 |---|---|
-| 💸 **Lower cost, same quality** | Boilerplate/tests/formatting go to Sonnet (`worker`); only genuinely hard reasoning goes to Opus at `max` effort (`reasoner`). You stop paying max-effort rates for mechanical edits. |
-| 🧠 **Better decisions on hard problems** | Root-cause debugging, algorithm/architecture design, and concurrency issues are *always* routed to a dedicated max-effort Opus agent — not squeezed in between trivial edits. |
-| 🎛️ **The orchestrator stays high-level** | The main session only **plans, delegates, and synthesizes** — it doesn't get dragged into implementation, so its context stays clean and focused. |
-| ⚡ **Parallel throughput** | Independent subtasks are delegated concurrently (e.g. `reasoner` designs an algorithm while `worker` scaffolds the tests). |
-| 👀 **Transparent by default** | A SessionStart hook prints the current team setup every session, so you always know which model is orchestrating and how to switch. |
+| 💸 **Lower cost, same quality** | Sonnet (`worker`) handles boilerplate, tests, and formatting. Opus at `max` effort (`reasoner`) handles only the genuinely hard reasoning. |
+| 🧠 **Better decisions on hard problems** | Debugging, algorithm design, and architecture decisions always go to a dedicated max-effort Opus agent. |
+| 🎛️ **The orchestrator stays high-level** | The main session only **plans, delegates, and combines results**, so its context stays clean. |
+| ⚡ **Parallel throughput** | Independent subtasks run at the same time (e.g. `reasoner` designs an algorithm while `worker` scaffolds the tests). |
+| 👀 **Transparent by default** | Every session starts by printing the current team setup, so you always know which model does what. |
 
 ---
 
@@ -38,9 +37,9 @@ allocation problem** by assigning each kind of work to the model that fits it.
 | `reasoner` subagent | Opus, fixed (`model: opus`, `effort: max`) | Hard debugging, algorithm & architecture design, "why does this happen" questions. |
 | `worker` subagent | Sonnet, fixed (`model: sonnet`, `effort: medium`) | Boilerplate, tests, formatting/lint, repetitive edits, simple well-specified fixes. |
 
-The **role-separation rules** are enforced by the `orchestration-protocol` skill, which
-triggers automatically on coding/design/debugging requests — so the orchestrator
-delegates instead of silently doing the work itself.
+The `orchestration-protocol` skill enforces these roles. It triggers automatically on
+coding, design, and debugging requests, making the orchestrator delegate instead of
+doing the work itself.
 
 ---
 
@@ -127,7 +126,7 @@ Internally this runs:
 | Character | Always-available top-tier stable model | A tier above Opus; for very long / ambiguous problems |
 | Cost | Baseline | ~2× Opus, and burns usage ~2× faster |
 | Thinking | Adjustable via effort | Always on (cannot be disabled) |
-| Best for | Most coding / debugging / design work | Multi-hour autonomous tasks where you hand off a goal and let it research, plan, and verify on its own |
+| Best for | Most coding / debugging / design work | Long autonomous tasks — hand it a goal and let it research, plan, and verify by itself |
 | Note | — | May auto-fall back to Opus if safety-classified content is detected (`/model fable` to return) |
 
 Your choice is saved to the project's `.claude/settings.local.json` (`model` +
@@ -135,8 +134,8 @@ Your choice is saved to the project's `.claude/settings.local.json` (`model` +
 the *current* session, type `/model opus` or `/model fable` yourself.
 
 > **Note on effort:** `effortLevel` in settings accepts `low` / `medium` / `high` /
-> `xhigh` — **not `max`** (that's session-only). For one genuinely hard task, use
-> `/effort max` in-session on top of your saved default.
+> `xhigh` — **not `max`**, which works only within a session. For a single very hard
+> task, type `/effort max` during the session.
 
 ---
 
