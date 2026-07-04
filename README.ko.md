@@ -1,3 +1,5 @@
+![Multi Model Team — 알맞은 모델에게 알맞은 일을](assets/banner.png)
+
 # Multi Model Team (MMT)
 
 <sub>plugin id: `multi-model-team`</sub>

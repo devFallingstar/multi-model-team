@@ -1,3 +1,5 @@
+![Multi Model Team — Right model for the right job](assets/banner.png)
+
 # Multi Model Team (MMT)
 
 <sub>plugin id: `multi-model-team`</sub>
