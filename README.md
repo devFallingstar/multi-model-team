@@ -15,11 +15,15 @@
 
 ---
 
-## The problem MMT solves
+## What is MMT?
 
-When a single model does everything, you overpay somewhere: a top-tier model wastes
-expensive tokens on boilerplate, or a cheap model makes architecture decisions it
-can't handle. **MMT fixes this by giving each kind of work to the model that fits it.**
+**MMT (Multi Model Team)** is a Claude Code plugin that turns one session into a team
+of models: an orchestrator plans and delegates, an Opus agent handles hard reasoning,
+and a Sonnet agent handles mechanical work.
+
+It exists because a single model doing everything overpays somewhere: a top-tier model
+wastes expensive tokens on boilerplate, or a cheap model makes architecture decisions
+it can't handle. **MMT gives each kind of work to the model that fits it.**
 
 | Benefit | How MMT delivers it |
 |---|---|
