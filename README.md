@@ -1,58 +1,71 @@
 # model-team
 
-작업 성격에 따라 다른 모델이 서브에이전트로 나눠 맡는 Claude Code 플러그인.
+**Read this in other languages: [English](README.md) · [한국어](README.ko.md)**
 
-| 역할 | 모델 | 담당 |
+> A Claude Code plugin that splits work across a **team of models** — a high-level
+> orchestrator plans and delegates, an Opus specialist does the hard reasoning, and
+> a Sonnet worker handles the mechanical work. Right model for the right job.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-plugin-5A67D8)
+
+---
+
+## Why use this?
+
+When one model handles an entire task, you're always paying the wrong price somewhere:
+a top-tier model burns expensive, high-effort tokens writing boilerplate, or a cheap
+model makes a bad architectural call it wasn't equipped for. **model-team fixes the
+allocation problem** by assigning each kind of work to the model that fits it.
+
+| Benefit | How model-team delivers it |
+|---|---|
+| 💸 **Lower cost, same quality** | Boilerplate/tests/formatting go to Sonnet (`fast-worker`); only genuinely hard reasoning goes to Opus at `max` effort (`deep-reasoner`). You stop paying max-effort rates for mechanical edits. |
+| 🧠 **Better decisions on hard problems** | Root-cause debugging, algorithm/architecture design, and concurrency issues are *always* routed to a dedicated max-effort Opus agent — not squeezed in between trivial edits. |
+| 🎛️ **The orchestrator stays high-level** | The main session only **plans, delegates, and synthesizes** — it doesn't get dragged into implementation, so its context stays clean and focused. |
+| ⚡ **Parallel throughput** | Independent subtasks are delegated concurrently (e.g. `deep-reasoner` designs an algorithm while `fast-worker` scaffolds the tests). |
+| 🔍 **A second-vendor perspective** | Optional [Codex](https://github.com/openai/codex-plugin-cc) integration lets the orchestrator suggest an adversarial cross-review from a *different* model family before you commit to a design. |
+| 👀 **Transparent by default** | A SessionStart hook prints the current team setup every session, so you always know which model is orchestrating and how to switch. |
+
+---
+
+## The team
+
+| Role | Model | Responsibility |
 |---|---|---|
-| 오케스트레이터 (메인 세션) | **Opus 4.8 또는 Fable 5** 중 선택 (`/orchestrator-model`) | 계획, 작업 분배, 결과 종합만 함 |
-| `deep-reasoner` 서브에이전트 | Opus 고정 (`model: opus`, `effort: max`) | 어려운 디버깅, 알고리즘/아키텍처 설계 |
-| `fast-worker` 서브에이전트 | Sonnet 고정 (`model: sonnet`, `effort: medium`) | 보일러플레이트, 테스트, 포맷팅, 단순 수정 |
-| Codex (별도 플러그인) | 사용자의 Codex 설정 | 다른 관점의 교차 검증/리뷰 동료 |
+| **Orchestrator** (main session) | **Opus 4.8** or **Fable 5** — you choose (`/orchestrator-model`) | Planning, delegation, and synthesis **only**. Does not implement. |
+| `deep-reasoner` subagent | Opus, fixed (`model: opus`, `effort: max`) | Hard debugging, algorithm & architecture design, "why does this happen" questions. |
+| `fast-worker` subagent | Sonnet, fixed (`model: sonnet`, `effort: medium`) | Boilerplate, tests, formatting/lint, repetitive edits, simple well-specified fixes. |
+| Codex (separate plugin) | Your Codex config | A different-perspective peer for cross-review / adversarial review. |
 
-## 오케스트레이터 모델 선택: Opus vs Fable 5
+The **role-separation rules** are enforced by the `orchestration-protocol` skill, which
+triggers automatically on coding/design/debugging requests — so the orchestrator
+delegates instead of silently doing the work itself.
+
+---
+
+## Quick start
+
+### Install from GitHub
+
+Inside Claude Code:
 
 ```
-/orchestrator-model
+/plugin marketplace add devFallingstar/model-team
+/plugin install model-team@model-team-marketplace
+/reload-plugins
 ```
 
-인자 없이 실행하면 두 모델의 차이(비용, thinking, 적합한 상황)를 보여주고
-선택하게 합니다. 바로 지정하려면:
-
-```
-/orchestrator-model opus     # 상시 사용에 적합, 비용/사용량 기준선
-/orchestrator-model fable    # 초장기·모호한 자율 작업 전용, 비용/사용량 약 2배
-```
-
-선택하면 프로젝트의 `.claude/settings.local.json`에 `model`/`effortLevel`
-기본값이 저장되어 **다음 세션부터** 자동 적용됩니다. **지금 세션**에 바로
-적용하려면 안내에 따라 `/model opus` 또는 `/model fable`을 직접 입력하세요
-(플러그인이 실행 중인 세션의 모델을 대신 전환할 수는 없습니다 — Claude Code
-아키텍처상 메인 세션 모델 전환은 사용자가 `/model` 커맨드로 직접 해야 합니다).
-세션 시작 시 훅이 현재 저장된 오케스트레이터 설정을 읽어 보여줍니다.
-
-## 왜 오케스트레이터 모델은 플러그인이 완전히 대신할 수 없나
-
-Claude Code 플러그인은 서브에이전트 frontmatter의 `model` 필드로 **서브에이전트의**
-모델은 고정할 수 있지만, 메인 세션(오케스트레이터) 자체의 모델 전환은 `/model`
-커맨드를 통해서만 가능합니다. 그래서 이 플러그인은:
-
-- `/orchestrator-model`로 선택 → 프로젝트 설정 파일에 기본값 저장 (다음 세션부터 자동)
-- 세션 시작 훅으로 현재 저장된 값을 보여주고, 지금 세션에 즉시 적용하려면
-  어떤 명령을 치면 되는지 안내
-- `orchestration-protocol` 스킬로 오케스트레이터가 (Opus든 Fable5든) 직접
-  구현하지 않고 위임/종합만 하도록 행동 규칙을 강제
-
-## 설치
-
-로컬 디렉토리에서 바로 설치:
+### Install from a local clone
 
 ```bash
+git clone https://github.com/devFallingstar/model-team.git
 cd model-team
 claude
 ```
 
-Claude Code 안에서 (경로는 반드시 `./` 형식 — 점 하나 `.` 는 "Invalid marketplace
-source format" 에러가 납니다):
+Inside Claude Code — **the path must use the `./` form**; a bare `.` fails with
+`Invalid marketplace source format`:
 
 ```
 /plugin marketplace add ./
@@ -60,23 +73,86 @@ source format" 에러가 납니다):
 /reload-plugins
 ```
 
-터미널에서 비대화형으로 설치할 수도 있습니다:
+Or non-interactively from your terminal:
 
 ```bash
 claude plugin marketplace add ./
 claude plugin install model-team@model-team-marketplace
 ```
 
-GitHub 저장소에서 바로 설치:
+Verify it loaded:
+
+```bash
+claude plugin details model-team@model-team-marketplace
+# Agents (2) deep-reasoner, fast-worker · Hooks (1) SessionStart · + commands & skill
+```
+
+---
+
+## Usage
+
+### Just ask in natural language
+
+The `orchestration-protocol` skill triggers on its own, but you can also delegate explicitly:
 
 ```
-/plugin marketplace add devFallingstar/model-team
-/plugin install model-team@model-team-marketplace
+Have deep-reasoner analyze the root cause of this race condition.
+Ask fast-worker to generate test skeletons for these functions.
 ```
 
-## Codex 동료 추가 (선택)
+### Run the full orchestration workflow
 
-다른 관점의 교차 검증을 위해 OpenAI의 공식 Codex 플러그인을 함께 설치하세요:
+```
+/orchestrate Add item-stack merge logic to the inventory system and write the tests.
+```
+
+Internally this runs:
+
+1. **Plan** — the orchestrator breaks the request into `[deep-reasoner]` / `[fast-worker]` subtasks and shows you the split.
+2. **Delegate** — independent subtasks go out in parallel, dependent ones are chained. The orchestrator never implements directly.
+3. **(Optional) Cross-check** — for important design decisions, it offers a Codex `/codex:review` or `/codex:adversarial-review` (with your confirmation).
+4. **Synthesize** — all results are merged into one coherent answer with next steps.
+
+---
+
+## Choosing the orchestrator model: Opus vs Fable 5
+
+```
+/orchestrator-model            # shows a comparison and asks
+/orchestrator-model opus       # everyday default; baseline cost & usage
+/orchestrator-model fable      # long-horizon / ambiguous autonomous work only
+```
+
+|  | Opus 4.8 | Fable 5 |
+|---|---|---|
+| Character | Always-available top-tier stable model | A tier above Opus; for very long / ambiguous problems |
+| Cost | Baseline | ~2× Opus, and burns usage ~2× faster |
+| Thinking | Adjustable via effort | Always on (cannot be disabled) |
+| Best for | Most coding / debugging / design work | Multi-hour autonomous tasks where you hand off a goal and let it research, plan, and verify on its own |
+| Note | — | May auto-fall back to Opus if safety-classified content is detected (`/model fable` to return) |
+
+Your choice is saved to the project's `.claude/settings.local.json` (`model` +
+`effortLevel`) and applies **from the next session onward**.
+
+### Why the plugin can't switch the orchestrator model for you
+
+Claude Code plugins can pin a **subagent's** model via the `model` frontmatter field,
+but the **main session's** model can only be changed by the user via the `/model`
+command. So this plugin:
+
+- **`/orchestrator-model`** → saves your choice as the project default (auto-applies next session).
+- **SessionStart hook** → shows the saved default and reminds you how to apply it right now.
+- To apply immediately in the *current* session, type `/model opus` or `/model fable` yourself.
+
+> **Note on effort:** `effortLevel` in settings accepts `low` / `medium` / `high` /
+> `xhigh` — **not `max`** (that's session-only). For one genuinely hard task, use
+> `/effort max` in-session on top of your saved default.
+
+---
+
+## Optional: add Codex as a peer reviewer
+
+For a cross-check from a different model family, install OpenAI's official Codex plugin:
 
 ```
 /plugin marketplace add openai/codex-plugin-cc
@@ -85,59 +161,53 @@ GitHub 저장소에서 바로 설치:
 /codex:setup
 ```
 
-Node.js 18.18+ 와 ChatGPT 계정(Free 포함) 또는 OpenAI API 키가 필요합니다.
-설치 후 `orchestration-protocol` 스킬이 중요한 설계 결정/diff에 대해
-`/codex:review` 또는 `/codex:adversarial-review` 실행을 제안하도록 되어 있습니다.
-Codex 명령은 별도 사용량을 소모하므로 오케스트레이터가 임의로 실행하지 않고
-사용자 확인을 받습니다.
+Requires Node.js 18.18+ and a ChatGPT account (Free works) or an OpenAI API key. Once
+installed, `orchestration-protocol` will *suggest* `/codex:review` or
+`/codex:adversarial-review` for important design decisions/diffs. Codex commands consume
+separate usage, so the orchestrator asks for your confirmation rather than running them
+on its own.
 
-## 사용법
+---
 
-일반 대화에서 자연어로 위임을 요청해도 됩니다:
-
-```
-deep-reasoner에게 이 레이스 컨디션 원인을 분석하게 해줘
-fast-worker한테 이 함수들에 대한 테스트 스켈레톤 만들어달라고 해
-```
-
-큰 작업은 오케스트레이션 워크플로를 명시적으로 시작:
-
-```
-/orchestrate 인벤토리 시스템에 아이템 스택 병합 로직을 추가하고 테스트까지 작성해줘
-```
-
-내부적으로:
-1. 오케스트레이터가 작업을 `[deep-reasoner]` / `[fast-worker]` 하위 작업으로 분해
-2. 독립 작업은 병렬, 의존 작업은 순차로 위임 (직접 구현하지 않음)
-3. 중요한 결정이 있으면 Codex 교차 검증을 제안
-4. 결과를 하나로 종합해서 보고
-
-## 구성 요소
+## Components
 
 ```
 model-team/
 ├── .claude-plugin/
-│   ├── plugin.json
-│   └── marketplace.json
+│   ├── plugin.json          # plugin metadata
+│   └── marketplace.json     # self-referencing marketplace for local install
 ├── agents/
-│   ├── deep-reasoner.md     # model: opus, effort: max
-│   └── fast-worker.md       # model: sonnet, effort: medium
+│   ├── deep-reasoner.md      # model: opus, effort: max
+│   └── fast-worker.md        # model: sonnet, effort: medium
 ├── skills/
-│   └── orchestration-protocol/SKILL.md   # 역할 분리 규칙, 자동 트리거
+│   └── orchestration-protocol/SKILL.md   # role-separation rules, auto-trigger
 ├── commands/
-│   ├── orchestrate.md        # /orchestrate 슬래시 커맨드
-│   └── orchestrator-model.md # /orchestrator-model 로 Opus/Fable5 선택
+│   ├── orchestrate.md        # /orchestrate <task>
+│   └── orchestrator-model.md # /orchestrator-model [opus|fable]
 ├── hooks/
-│   ├── hooks.json           # SessionStart 안내
-│   └── session-start-reminder.js   # Node 스크립트 (bash/python3 의존성 없음, 크로스플랫폼)
+│   ├── hooks.json            # registers the SessionStart hook
+│   └── session-start-reminder.js   # Node script — no bash/python deps, cross-platform
+├── LICENSE
 └── README.md
 ```
 
-## 커스터마이징 팁
+The SessionStart hook is a **Node** script (Claude Code ships with Node), so it runs
+identically on Windows, macOS, and Linux with no `bash` or `python3` dependency.
 
-- `fast-worker`의 `effort`를 `low`로 낮추면 더 저렴/빠르게 잡일을 처리합니다.
-  (문서 기준: `low`/`medium`/`high`/`xhigh`/`max` 중 선택, 모델별로 지원 범위가 다름)
-- `deep-reasoner`에 `isolation: worktree`를 추가하면 별도 git worktree에서
-  안전하게 실험하게 할 수 있습니다.
-- 두 agent 모두 `tools`를 좁혀서 (예: 리뷰 전용 agent는 `Read, Grep, Glob`만)
-  권한을 최소화할 수 있습니다.
+---
+
+## Customization tips
+
+- Lower `fast-worker`'s `effort` to `low` for cheaper/faster grunt work. Valid effort
+  levels: `low` / `medium` / `high` / `xhigh` / `max` (availability depends on the model).
+- Add `isolation: worktree` to `deep-reasoner` to let it experiment safely in a separate
+  git worktree.
+- Narrow each agent's `tools` (e.g. a review-only agent gets just `Read, Grep, Glob`) to
+  minimize its permissions.
+- Valid `model` aliases: `sonnet`, `opus`, `haiku`, `fable` (or a full model ID, or `inherit`).
+
+---
+
+## License
+
+[MIT](LICENSE) © 유성
