@@ -14,7 +14,8 @@ const settingsFile = path.join(base, '.claude', 'settings.local.json');
 let model = '';
 let effort = '';
 try {
-  const data = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+  const raw = fs.readFileSync(settingsFile, 'utf8').replace(/^﻿/, '');
+  const data = JSON.parse(raw);
   model = typeof data.model === 'string' ? data.model : '';
   effort = typeof data.effortLevel === 'string' ? data.effortLevel : '';
 } catch (e) {
@@ -35,6 +36,7 @@ if (model) {
 
 lines.push('  reasoner              : Opus 고정 서브에이전트 (어려운 디버깅 / 알고리즘·아키텍처 설계)');
 lines.push('  worker                : Sonnet 고정 서브에이전트 (보일러플레이트 / 테스트 / 포맷팅 / 단순 수정)');
+lines.push('  reviewer              : Opus 고정 읽기 전용 서브에이전트 (커밋 전 diff 검토 — 정확성/엣지케이스/보안)');
 lines.push('');
 lines.push('  큰 작업은 /orchestrate <작업 설명> 으로 시작하면 계획->분배->종합 순서로 진행됩니다.');
 
