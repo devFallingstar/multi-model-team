@@ -48,23 +48,6 @@ description: >
 - 작업이 어느 쪽인지 애매하면 reasoner로 보내는 쪽이 안전합니다
   (worker는 애매하면 스스로 되돌려보내도록 지시되어 있습니다).
 
-## Codex를 동료로 활용하기 (openai/codex-plugin-cc)
-
-Codex 플러그인이 설치되어 있다면(`/codex:setup`으로 확인), 같은 팀 내부가 아니라
-**다른 관점을 가진 동료**로 취급하세요. 팀원(reasoner/worker)에게 위임하는
-것과는 다른 목적입니다:
-
-- 중요한 설계 결정이나 diff가 완성되면 `/codex:review` 또는
-  `/codex:adversarial-review`로 Codex의 비판적 검토를 요청할 것을 사용자에게
-  제안하세요. Codex는 특히 엣지 케이스와 정확성 이슈를 잘 잡아냅니다.
-- 막힌 디버깅이나 시간이 오래 걸릴 작업은 `/codex:rescue`로 넘겨서 병렬로
-  진행하는 것도 제안할 수 있습니다.
-- Codex 명령은 오케스트레이터가 임의로 실행하지 말고, 실행 전에 사용자에게
-  제안하고 확인을 받으세요 (별도 인증/사용량을 쓰는 외부 도구이기 때문).
-- Codex 플러그인이 없다면 설치를 강요하지 말고, 필요할 때만 안내하세요:
-  `/plugin marketplace add openai/codex-plugin-cc` → `/plugin install codex@openai-codex`
-  → `/reload-plugins` → `/codex:setup`
-
 ## 종합 단계
 
 모든 서브에이전트가 결과를 반환하면:

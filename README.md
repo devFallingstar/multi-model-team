@@ -24,7 +24,6 @@ allocation problem** by assigning each kind of work to the model that fits it.
 | 🧠 **Better decisions on hard problems** | Root-cause debugging, algorithm/architecture design, and concurrency issues are *always* routed to a dedicated max-effort Opus agent — not squeezed in between trivial edits. |
 | 🎛️ **The orchestrator stays high-level** | The main session only **plans, delegates, and synthesizes** — it doesn't get dragged into implementation, so its context stays clean and focused. |
 | ⚡ **Parallel throughput** | Independent subtasks are delegated concurrently (e.g. `reasoner` designs an algorithm while `worker` scaffolds the tests). |
-| 🔍 **A second-vendor perspective** | Optional [Codex](https://github.com/openai/codex-plugin-cc) integration lets the orchestrator suggest an adversarial cross-review from a *different* model family before you commit to a design. |
 | 👀 **Transparent by default** | A SessionStart hook prints the current team setup every session, so you always know which model is orchestrating and how to switch. |
 
 ---
@@ -36,7 +35,6 @@ allocation problem** by assigning each kind of work to the model that fits it.
 | **Orchestrator** (main session) | **Opus 4.8** or **Fable 5** — you choose (`/orchestrator-model`) | Planning, delegation, and synthesis **only**. Does not implement. |
 | `reasoner` subagent | Opus, fixed (`model: opus`, `effort: max`) | Hard debugging, algorithm & architecture design, "why does this happen" questions. |
 | `worker` subagent | Sonnet, fixed (`model: sonnet`, `effort: medium`) | Boilerplate, tests, formatting/lint, repetitive edits, simple well-specified fixes. |
-| Codex (separate plugin) | Your Codex config | A different-perspective peer for cross-review / adversarial review. |
 
 The **role-separation rules** are enforced by the `orchestration-protocol` skill, which
 triggers automatically on coding/design/debugging requests — so the orchestrator
@@ -110,8 +108,7 @@ Internally this runs:
 
 1. **Plan** — the orchestrator breaks the request into `[reasoner]` / `[worker]` subtasks and shows you the split.
 2. **Delegate** — independent subtasks go out in parallel, dependent ones are chained. The orchestrator never implements directly.
-3. **(Optional) Cross-check** — for important design decisions, it offers a Codex `/codex:review` or `/codex:adversarial-review` (with your confirmation).
-4. **Synthesize** — all results are merged into one coherent answer with next steps.
+3. **Synthesize** — all results are merged into one coherent answer with next steps.
 
 ---
 
@@ -132,40 +129,12 @@ Internally this runs:
 | Note | — | May auto-fall back to Opus if safety-classified content is detected (`/model fable` to return) |
 
 Your choice is saved to the project's `.claude/settings.local.json` (`model` +
-`effortLevel`) and applies **from the next session onward**.
-
-### Why the plugin can't switch the orchestrator model for you
-
-Claude Code plugins can pin a **subagent's** model via the `model` frontmatter field,
-but the **main session's** model can only be changed by the user via the `/model`
-command. So this plugin:
-
-- **`/orchestrator-model`** → saves your choice as the project default (auto-applies next session).
-- **SessionStart hook** → shows the saved default and reminds you how to apply it right now.
-- To apply immediately in the *current* session, type `/model opus` or `/model fable` yourself.
+`effortLevel`) and applies **from the next session onward**. To apply it immediately in
+the *current* session, type `/model opus` or `/model fable` yourself.
 
 > **Note on effort:** `effortLevel` in settings accepts `low` / `medium` / `high` /
 > `xhigh` — **not `max`** (that's session-only). For one genuinely hard task, use
 > `/effort max` in-session on top of your saved default.
-
----
-
-## Optional: add Codex as a peer reviewer
-
-For a cross-check from a different model family, install OpenAI's official Codex plugin:
-
-```
-/plugin marketplace add openai/codex-plugin-cc
-/plugin install codex@openai-codex
-/reload-plugins
-/codex:setup
-```
-
-Requires Node.js 18.18+ and a ChatGPT account (Free works) or an OpenAI API key. Once
-installed, `orchestration-protocol` will *suggest* `/codex:review` or
-`/codex:adversarial-review` for important design decisions/diffs. Codex commands consume
-separate usage, so the orchestrator asks for your confirmation rather than running them
-on its own.
 
 ---
 

@@ -34,9 +34,6 @@ if (model) {
 
 lines.push('  reasoner              : Opus 고정 서브에이전트 (어려운 디버깅 / 알고리즘·아키텍처 설계)');
 lines.push('  worker                : Sonnet 고정 서브에이전트 (보일러플레이트 / 테스트 / 포맷팅 / 단순 수정)');
-lines.push('  Codex 동료             : 미설치 시 -> /plugin marketplace add openai/codex-plugin-cc');
-lines.push('                                      -> /plugin install codex@openai-codex');
-lines.push('                                      -> /reload-plugins -> /codex:setup');
 lines.push('');
 lines.push('  큰 작업은 /orchestrate <작업 설명> 으로 시작하면 계획->분배->종합 순서로 진행됩니다.');
 
