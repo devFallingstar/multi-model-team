@@ -1,4 +1,6 @@
-# model-team
+# Multi Model Team (MMT)
+
+<sub>plugin id: `multi-model-team`</sub>
 
 **Read this in other languages: [English](README.md) · [한국어](README.ko.md)**
 
@@ -15,10 +17,10 @@
 
 When one model handles an entire task, you're always paying the wrong price somewhere:
 a top-tier model burns expensive, high-effort tokens writing boilerplate, or a cheap
-model makes a bad architectural call it wasn't equipped for. **model-team fixes the
+model makes a bad architectural call it wasn't equipped for. **MMT fixes the
 allocation problem** by assigning each kind of work to the model that fits it.
 
-| Benefit | How model-team delivers it |
+| Benefit | How MMT delivers it |
 |---|---|
 | 💸 **Lower cost, same quality** | Boilerplate/tests/formatting go to Sonnet (`worker`); only genuinely hard reasoning goes to Opus at `max` effort (`reasoner`). You stop paying max-effort rates for mechanical edits. |
 | 🧠 **Better decisions on hard problems** | Root-cause debugging, algorithm/architecture design, and concurrency issues are *always* routed to a dedicated max-effort Opus agent — not squeezed in between trivial edits. |
@@ -49,16 +51,16 @@ delegates instead of silently doing the work itself.
 Inside Claude Code:
 
 ```
-/plugin marketplace add devFallingstar/model-team
-/plugin install model-team@model-team-marketplace
+/plugin marketplace add devFallingstar/multi-model-team
+/plugin install multi-model-team@multi-model-team-marketplace
 /reload-plugins
 ```
 
 ### Install from a local clone
 
 ```bash
-git clone https://github.com/devFallingstar/model-team.git
-cd model-team
+git clone https://github.com/devFallingstar/multi-model-team.git
+cd multi-model-team
 claude
 ```
 
@@ -67,7 +69,7 @@ Inside Claude Code — **the path must use the `./` form**; a bare `.` fails wit
 
 ```
 /plugin marketplace add ./
-/plugin install model-team@model-team-marketplace
+/plugin install multi-model-team@multi-model-team-marketplace
 /reload-plugins
 ```
 
@@ -75,13 +77,13 @@ Or non-interactively from your terminal:
 
 ```bash
 claude plugin marketplace add ./
-claude plugin install model-team@model-team-marketplace
+claude plugin install multi-model-team@multi-model-team-marketplace
 ```
 
 Verify it loaded:
 
 ```bash
-claude plugin details model-team@model-team-marketplace
+claude plugin details multi-model-team@multi-model-team-marketplace
 # Agents (2) reasoner, worker · Hooks (1) SessionStart · + commands & skill
 ```
 
@@ -141,7 +143,7 @@ the *current* session, type `/model opus` or `/model fable` yourself.
 ## Components
 
 ```
-model-team/
+multi-model-team/
 ├── .claude-plugin/
 │   ├── plugin.json          # plugin metadata
 │   └── marketplace.json     # self-referencing marketplace for local install

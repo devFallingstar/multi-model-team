@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// model-team SessionStart 훅.
+// multi-model-team SessionStart 훅.
 // .claude/settings.local.json 을 읽어 현재 오케스트레이터 기본값을 안내한다.
 // bash/python3 같은 외부 의존성 없이 Node 표준 모듈만 사용 → Windows/macOS/Linux 공통 동작.
 // (Claude Code 자체가 Node 기반이라 node 실행기는 항상 존재한다.)
@@ -21,7 +21,7 @@ try {
 }
 
 const lines = [];
-lines.push('[model-team] 멀티모델 팀 플러그인 로드됨.');
+lines.push('[MMT] Multi Model Team 플러그인 로드됨.');
 lines.push('');
 
 if (model) {

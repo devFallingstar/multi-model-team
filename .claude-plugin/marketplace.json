@@ -1,12 +1,12 @@
 {
-  "name": "model-team-marketplace",
-  "description": "model-team 멀티모델 팀 플러그인 로컬 설치용 마켓플레이스",
+  "name": "multi-model-team-marketplace",
+  "description": "multi-model-team 멀티모델 팀 플러그인 로컬 설치용 마켓플레이스",
   "owner": {
     "name": "유성"
   },
   "plugins": [
     {
-      "name": "model-team",
+      "name": "multi-model-team",
       "source": "./",
       "description": "Fable5 오케스트레이터 + Opus reasoner + Sonnet worker 멀티모델 팀 구성"
     }
