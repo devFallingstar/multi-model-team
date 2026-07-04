@@ -67,10 +67,10 @@ claude plugin marketplace add ./
 claude plugin install model-team@model-team-marketplace
 ```
 
-GitHub 저장소로 배포하는 경우:
+GitHub 저장소에서 바로 설치:
 
 ```
-/plugin marketplace add <your-org>/model-team
+/plugin marketplace add devFallingstar/model-team
 /plugin install model-team@model-team-marketplace
 ```
 
