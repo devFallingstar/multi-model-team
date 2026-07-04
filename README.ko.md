@@ -20,10 +20,10 @@
 
 | 이점 | model-team이 제공하는 방식 |
 |---|---|
-| 💸 **같은 품질, 더 낮은 비용** | 보일러플레이트/테스트/포맷팅은 Sonnet(`fast-worker`)에게, 진짜 어려운 추론만 Opus `max` effort(`deep-reasoner`)에게. 기계적 수정에 max-effort 요금을 더는 내지 않습니다. |
+| 💸 **같은 품질, 더 낮은 비용** | 보일러플레이트/테스트/포맷팅은 Sonnet(`worker`)에게, 진짜 어려운 추론만 Opus `max` effort(`reasoner`)에게. 기계적 수정에 max-effort 요금을 더는 내지 않습니다. |
 | 🧠 **어려운 문제에서 더 나은 판단** | 근본 원인 디버깅, 알고리즘/아키텍처 설계, 동시성 이슈는 *항상* 전용 max-effort Opus 에이전트로 라우팅 — 사소한 수정 사이에 끼워넣지 않습니다. |
 | 🎛️ **오케스트레이터는 상위 시점 유지** | 메인 세션은 **계획·분배·종합**만 — 구현에 끌려들지 않아 컨텍스트가 깨끗하고 집중된 상태로 유지됩니다. |
-| ⚡ **병렬 처리량** | 독립적인 하위 작업은 동시에 위임됩니다 (예: `deep-reasoner`가 알고리즘을 설계하는 동안 `fast-worker`가 테스트 스캐폴딩을 준비). |
+| ⚡ **병렬 처리량** | 독립적인 하위 작업은 동시에 위임됩니다 (예: `reasoner`가 알고리즘을 설계하는 동안 `worker`가 테스트 스캐폴딩을 준비). |
 | 🔍 **다른 벤더의 관점** | 선택적 [Codex](https://github.com/openai/codex-plugin-cc) 연동으로, 설계를 확정하기 전에 *다른* 모델 계열의 적대적 교차 검토를 제안받을 수 있습니다. |
 | 👀 **기본적으로 투명함** | SessionStart 훅이 매 세션 현재 팀 구성을 출력해, 어떤 모델이 오케스트레이션 중이고 어떻게 바꾸는지 항상 알 수 있습니다. |
 
@@ -34,8 +34,8 @@
 | 역할 | 모델 | 담당 |
 |---|---|---|
 | **오케스트레이터** (메인 세션) | **Opus 4.8** 또는 **Fable 5** — 선택 (`/orchestrator-model`) | 계획·분배·종합 **만**. 직접 구현하지 않음. |
-| `deep-reasoner` 서브에이전트 | Opus 고정 (`model: opus`, `effort: max`) | 어려운 디버깅, 알고리즘·아키텍처 설계, "왜 이렇게 동작하는가" 규명. |
-| `fast-worker` 서브에이전트 | Sonnet 고정 (`model: sonnet`, `effort: medium`) | 보일러플레이트, 테스트, 포맷팅/린트, 반복 수정, 명확한 단순 수정. |
+| `reasoner` 서브에이전트 | Opus 고정 (`model: opus`, `effort: max`) | 어려운 디버깅, 알고리즘·아키텍처 설계, "왜 이렇게 동작하는가" 규명. |
+| `worker` 서브에이전트 | Sonnet 고정 (`model: sonnet`, `effort: medium`) | 보일러플레이트, 테스트, 포맷팅/린트, 반복 수정, 명확한 단순 수정. |
 | Codex (별도 플러그인) | 사용자의 Codex 설정 | 교차 검증·적대적 리뷰를 위한 다른 관점의 동료. |
 
 **역할 분리 규칙**은 `orchestration-protocol` 스킬이 강제합니다. 코딩/설계/디버깅
@@ -83,7 +83,7 @@ claude plugin install model-team@model-team-marketplace
 
 ```bash
 claude plugin details model-team@model-team-marketplace
-# Agents (2) deep-reasoner, fast-worker · Hooks (1) SessionStart · + 커맨드 & 스킬
+# Agents (2) reasoner, worker · Hooks (1) SessionStart · + 커맨드 & 스킬
 ```
 
 ---
@@ -95,8 +95,8 @@ claude plugin details model-team@model-team-marketplace
 `orchestration-protocol` 스킬이 스스로 트리거되지만, 명시적으로 위임할 수도 있습니다:
 
 ```
-deep-reasoner에게 이 레이스 컨디션의 근본 원인을 분석하게 해줘.
-fast-worker한테 이 함수들에 대한 테스트 스켈레톤 만들어달라고 해.
+reasoner에게 이 레이스 컨디션의 근본 원인을 분석하게 해줘.
+worker한테 이 함수들에 대한 테스트 스켈레톤 만들어달라고 해.
 ```
 
 ### 전체 오케스트레이션 워크플로 실행
@@ -107,7 +107,7 @@ fast-worker한테 이 함수들에 대한 테스트 스켈레톤 만들어달라
 
 내부적으로:
 
-1. **계획** — 오케스트레이터가 요청을 `[deep-reasoner]` / `[fast-worker]` 하위 작업으로 분해해 보여줍니다.
+1. **계획** — 오케스트레이터가 요청을 `[reasoner]` / `[worker]` 하위 작업으로 분해해 보여줍니다.
 2. **분배** — 독립 작업은 병렬로, 의존 작업은 순차로 위임합니다. 오케스트레이터는 직접 구현하지 않습니다.
 3. **(선택) 교차 검증** — 중요한 설계 결정이 있으면 Codex `/codex:review` 또는 `/codex:adversarial-review`를 (확인을 받아) 제안합니다.
 4. **종합** — 모든 결과를 하나의 일관된 답과 다음 단계로 정리합니다.
@@ -175,8 +175,8 @@ model-team/
 │   ├── plugin.json          # 플러그인 메타데이터
 │   └── marketplace.json     # 로컬 설치용 self-reference 마켓플레이스
 ├── agents/
-│   ├── deep-reasoner.md      # model: opus, effort: max
-│   └── fast-worker.md        # model: sonnet, effort: medium
+│   ├── reasoner.md      # model: opus, effort: max
+│   └── worker.md        # model: sonnet, effort: medium
 ├── skills/
 │   └── orchestration-protocol/SKILL.md   # 역할 분리 규칙, 자동 트리거
 ├── commands/
@@ -196,9 +196,9 @@ SessionStart 훅은 **Node** 스크립트입니다(Claude Code에 Node가 기본
 
 ## 커스터마이징 팁
 
-- `fast-worker`의 `effort`를 `low`로 낮추면 더 저렴/빠르게 잡일을 처리합니다. 유효
+- `worker`의 `effort`를 `low`로 낮추면 더 저렴/빠르게 잡일을 처리합니다. 유효
   effort 값: `low` / `medium` / `high` / `xhigh` / `max` (모델별 지원 범위 다름).
-- `deep-reasoner`에 `isolation: worktree`를 추가하면 별도 git worktree에서 안전하게
+- `reasoner`에 `isolation: worktree`를 추가하면 별도 git worktree에서 안전하게
   실험하게 할 수 있습니다.
 - 각 에이전트의 `tools`를 좁혀(예: 리뷰 전용 에이전트는 `Read, Grep, Glob`만) 권한을
   최소화할 수 있습니다.

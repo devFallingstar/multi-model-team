@@ -20,10 +20,10 @@ allocation problem** by assigning each kind of work to the model that fits it.
 
 | Benefit | How model-team delivers it |
 |---|---|
-| 💸 **Lower cost, same quality** | Boilerplate/tests/formatting go to Sonnet (`fast-worker`); only genuinely hard reasoning goes to Opus at `max` effort (`deep-reasoner`). You stop paying max-effort rates for mechanical edits. |
+| 💸 **Lower cost, same quality** | Boilerplate/tests/formatting go to Sonnet (`worker`); only genuinely hard reasoning goes to Opus at `max` effort (`reasoner`). You stop paying max-effort rates for mechanical edits. |
 | 🧠 **Better decisions on hard problems** | Root-cause debugging, algorithm/architecture design, and concurrency issues are *always* routed to a dedicated max-effort Opus agent — not squeezed in between trivial edits. |
 | 🎛️ **The orchestrator stays high-level** | The main session only **plans, delegates, and synthesizes** — it doesn't get dragged into implementation, so its context stays clean and focused. |
-| ⚡ **Parallel throughput** | Independent subtasks are delegated concurrently (e.g. `deep-reasoner` designs an algorithm while `fast-worker` scaffolds the tests). |
+| ⚡ **Parallel throughput** | Independent subtasks are delegated concurrently (e.g. `reasoner` designs an algorithm while `worker` scaffolds the tests). |
 | 🔍 **A second-vendor perspective** | Optional [Codex](https://github.com/openai/codex-plugin-cc) integration lets the orchestrator suggest an adversarial cross-review from a *different* model family before you commit to a design. |
 | 👀 **Transparent by default** | A SessionStart hook prints the current team setup every session, so you always know which model is orchestrating and how to switch. |
 
@@ -34,8 +34,8 @@ allocation problem** by assigning each kind of work to the model that fits it.
 | Role | Model | Responsibility |
 |---|---|---|
 | **Orchestrator** (main session) | **Opus 4.8** or **Fable 5** — you choose (`/orchestrator-model`) | Planning, delegation, and synthesis **only**. Does not implement. |
-| `deep-reasoner` subagent | Opus, fixed (`model: opus`, `effort: max`) | Hard debugging, algorithm & architecture design, "why does this happen" questions. |
-| `fast-worker` subagent | Sonnet, fixed (`model: sonnet`, `effort: medium`) | Boilerplate, tests, formatting/lint, repetitive edits, simple well-specified fixes. |
+| `reasoner` subagent | Opus, fixed (`model: opus`, `effort: max`) | Hard debugging, algorithm & architecture design, "why does this happen" questions. |
+| `worker` subagent | Sonnet, fixed (`model: sonnet`, `effort: medium`) | Boilerplate, tests, formatting/lint, repetitive edits, simple well-specified fixes. |
 | Codex (separate plugin) | Your Codex config | A different-perspective peer for cross-review / adversarial review. |
 
 The **role-separation rules** are enforced by the `orchestration-protocol` skill, which
@@ -84,7 +84,7 @@ Verify it loaded:
 
 ```bash
 claude plugin details model-team@model-team-marketplace
-# Agents (2) deep-reasoner, fast-worker · Hooks (1) SessionStart · + commands & skill
+# Agents (2) reasoner, worker · Hooks (1) SessionStart · + commands & skill
 ```
 
 ---
@@ -96,8 +96,8 @@ claude plugin details model-team@model-team-marketplace
 The `orchestration-protocol` skill triggers on its own, but you can also delegate explicitly:
 
 ```
-Have deep-reasoner analyze the root cause of this race condition.
-Ask fast-worker to generate test skeletons for these functions.
+Have reasoner analyze the root cause of this race condition.
+Ask worker to generate test skeletons for these functions.
 ```
 
 ### Run the full orchestration workflow
@@ -108,7 +108,7 @@ Ask fast-worker to generate test skeletons for these functions.
 
 Internally this runs:
 
-1. **Plan** — the orchestrator breaks the request into `[deep-reasoner]` / `[fast-worker]` subtasks and shows you the split.
+1. **Plan** — the orchestrator breaks the request into `[reasoner]` / `[worker]` subtasks and shows you the split.
 2. **Delegate** — independent subtasks go out in parallel, dependent ones are chained. The orchestrator never implements directly.
 3. **(Optional) Cross-check** — for important design decisions, it offers a Codex `/codex:review` or `/codex:adversarial-review` (with your confirmation).
 4. **Synthesize** — all results are merged into one coherent answer with next steps.
@@ -177,8 +177,8 @@ model-team/
 │   ├── plugin.json          # plugin metadata
 │   └── marketplace.json     # self-referencing marketplace for local install
 ├── agents/
-│   ├── deep-reasoner.md      # model: opus, effort: max
-│   └── fast-worker.md        # model: sonnet, effort: medium
+│   ├── reasoner.md      # model: opus, effort: max
+│   └── worker.md        # model: sonnet, effort: medium
 ├── skills/
 │   └── orchestration-protocol/SKILL.md   # role-separation rules, auto-trigger
 ├── commands/
@@ -198,9 +198,9 @@ identically on Windows, macOS, and Linux with no `bash` or `python3` dependency.
 
 ## Customization tips
 
-- Lower `fast-worker`'s `effort` to `low` for cheaper/faster grunt work. Valid effort
+- Lower `worker`'s `effort` to `low` for cheaper/faster grunt work. Valid effort
   levels: `low` / `medium` / `high` / `xhigh` / `max` (availability depends on the model).
-- Add `isolation: worktree` to `deep-reasoner` to let it experiment safely in a separate
+- Add `isolation: worktree` to `reasoner` to let it experiment safely in a separate
   git worktree.
 - Narrow each agent's `tools` (e.g. a review-only agent gets just `Read, Grep, Glob`) to
   minimize its permissions.

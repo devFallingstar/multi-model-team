@@ -8,10 +8,10 @@ argument-hint: [작업 설명]
 `orchestration-protocol` 스킬의 규칙을 따라 진행합니다:
 
 1. **계획**: 작업을 구체적인 하위 작업 목록으로 분해하고, 각각을
-   `[deep-reasoner]` 또는 `[fast-worker]` 태그로 분류해서 사용자에게 짧게
+   `[reasoner]` 또는 `[worker]` 태그로 분류해서 사용자에게 짧게
    보여주세요.
 2. **분배**: 독립적인 하위 작업은 병렬로, 의존적인 작업은 순차로
-   Agent 도구를 통해 deep-reasoner / fast-worker에게 위임하세요.
+   Agent 도구를 통해 reasoner / worker에게 위임하세요.
    오케스트레이터 본인은 직접 구현하지 않습니다.
 3. **(선택) 교차 검증**: 결과에 중요한 설계 결정이 포함되어 있다면,
    Codex 플러그인이 설치되어 있는지 확인하고 `/codex:review` 또는

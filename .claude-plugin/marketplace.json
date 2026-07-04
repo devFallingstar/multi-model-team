@@ -8,7 +8,7 @@
     {
       "name": "model-team",
       "source": "./",
-      "description": "Fable5 오케스트레이터 + Opus deep-reasoner + Sonnet fast-worker 멀티모델 팀 구성"
+      "description": "Fable5 오케스트레이터 + Opus reasoner + Sonnet worker 멀티모델 팀 구성"
     }
   ]
 }
