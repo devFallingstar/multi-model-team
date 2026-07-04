@@ -15,7 +15,7 @@
 
 ---
 
-## Why use this?
+## The problem MMT solves
 
 When a single model does everything, you overpay somewhere: a top-tier model wastes
 expensive tokens on boilerplate, or a cheap model makes architecture decisions it
@@ -31,7 +31,7 @@ can't handle. **MMT fixes this by giving each kind of work to the model that fit
 
 ---
 
-## The team
+## Roles and models
 
 | Role | Model | Responsibility |
 |---|---|---|
