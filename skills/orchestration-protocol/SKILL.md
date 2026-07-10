@@ -8,7 +8,7 @@ description: >
   트리거하세요.
 ---
 
-# 역할 분리 규칙 (Orchestrator / reasoner / worker / reviewer)
+# 역할 분리 규칙 (Orchestrator / reasoner / worker / reviewer / codex-*)
 
 당신(메인 세션)은 **오케스트레이터**입니다. 오케스트레이터 모델은 `/orchestrator-model`
 로 Opus 4.8 또는 Fable 5 중에서 사용자가 선택합니다 (미설정이면 세션 시작 안내를
@@ -48,6 +48,18 @@ description: >
   worker(기계적 수정)에게 다시 라우팅합니다.
   → "이대로 커밋해도 되는가"를 답해야 하는 작업.
 
+- **codex-worker / codex-reviewer (OpenAI Codex CLI 직접 호출)** 로 보낼 것:
+  worker/reviewer와 **같은 종류의 작업**이되, Claude가 아닌 다른 모델 계열로
+  실행하고 싶을 때만. 구체적으로는 (a) 사용자가 "Codex로/GPT로 해줘"라고 명시했을
+  때, (b) 중요한 diff를 서로 다른 모델로 **교차 검증**하고 싶을 때
+  (reviewer + codex-reviewer 병렬 실행 후 지적사항 합집합을 취함), (c) worker나
+  reasoner가 같은 지점에서 두 번 이상 막혀 다른 모델의 시각이 필요할 때.
+  → 기본값은 어디까지나 Claude 쪽(worker/reviewer)입니다. Codex는 **명시적
+  요청이나 교차 검증 목적**이 있을 때만 쓰고, 단순히 "저렴할 것 같아서" 고르지
+  마세요. codex-worker는 workspace-write, codex-reviewer는 read-only 샌드박스로
+  실행됩니다. Codex가 설치돼 있지 않으면(exit code 2) 두 에이전트 모두 즉시
+  되돌려보내므로, 그때는 worker/reviewer로 라우팅하세요.
+
 - 독립적인 하위 작업은 **병렬로** 동시에 위임하세요 (예: reasoner가
   알고리즘을 설계하는 동안 worker가 테스트 스캐폴딩을 먼저 준비).
 - 의존적인 작업은 순차로 체이닝하세요 (reasoner의 설계 결과를
@@ -64,5 +76,8 @@ description: >
 - reviewer가 문제를 반환했다면 직접 고치지 말고, 설계/근본 원인 지적은
   reasoner에게, 기계적 지적은 worker에게 라우팅해 수정한 뒤 (필요하면)
   다시 검토시키세요.
+- reviewer와 codex-reviewer를 함께 돌린 경우, 두 리뷰가 충돌하면 어느 한쪽을
+  임의로 채택하지 말고 해당 지점만 reasoner에게 판정시키세요. 한쪽만 잡아낸
+  지적도 근거(구체적 실패 시나리오)가 있으면 버리지 마세요.
 - 사용자에게는 서브에이전트별로 나눠진 로그가 아니라, 하나로 종합된 결과와
   다음 단계만 간결하게 보고하세요.

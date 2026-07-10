@@ -45,6 +45,8 @@ it can't handle. **MMT gives each kind of work to the model that fits it.**
 | `reasoner` subagent | Opus, fixed (`model: opus`, `effort: max`) | Hard debugging, algorithm & architecture design, "why does this happen" questions. |
 | `worker` subagent | Sonnet, fixed (`model: sonnet`, `effort: medium`) | Boilerplate, tests, formatting/lint, repetitive edits, simple well-specified fixes. |
 | `reviewer` subagent | Opus, fixed (`model: opus`, `effort: high`), read-only | Reviews a finished diff before commit — correctness, edge cases, security. Returns problems only; the orchestrator routes the fixes back to reasoner/worker. |
+| `codex-worker` subagent | **OpenAI Codex CLI** (`workspace-write` sandbox) | The same mechanical work as `worker`, executed by a different model family. Opt-in. |
+| `codex-reviewer` subagent | **OpenAI Codex CLI** (`read-only` sandbox) | The same pre-commit review as `reviewer`, executed by a different model family. Opt-in — useful for cross-model review. |
 
 The `orchestration-protocol` skill enforces these roles. It triggers automatically on
 coding, design, and debugging requests, making the orchestrator delegate instead of
@@ -92,8 +94,22 @@ Verify it loaded:
 
 ```bash
 claude plugin details multi-model-team@multi-model-team-marketplace
-# Agents (3) reasoner, worker, reviewer · Hooks (1) SessionStart · + commands & skill
+# Agents (5) reasoner, worker, reviewer, codex-worker, codex-reviewer · Hooks (1) SessionStart · + commands & skill
 ```
+
+### Optional: enable the Codex agents
+
+`codex-worker` and `codex-reviewer` shell out to the OpenAI Codex CLI. They stay
+dormant unless it is installed:
+
+```bash
+npm install -g @openai/codex
+codex login
+```
+
+`/team-status` reports whether the CLI was found, and the SessionStart banner shows
+the agents as `비활성` (inactive) when it is missing. Everything else in MMT works
+without Codex.
 
 ---
 
@@ -123,6 +139,37 @@ Internally this runs:
 3. **Synthesize** — all results are merged into one coherent answer with next steps.
 
 Add `--plan-only` to stop after the plan for your approval before any delegation (e.g. `/orchestrate --plan-only <task>`).
+
+### Delegate to Codex instead of Claude
+
+```
+/orchestrate --codex Rename these fields across the module and update the tests.
+/orchestrate --cross-review Merge the item stacks and review the diff.
+```
+
+- `--codex` routes mechanical subtasks to `codex-worker` and the review step to
+  `codex-reviewer`. Reasoning still goes to `reasoner`.
+- `--cross-review` runs `reviewer` (Opus) and `codex-reviewer` (Codex) **in parallel**
+  on the same diff and reports the union of their findings. Where the two disagree,
+  the orchestrator sends that specific point to `reasoner` to adjudicate rather than
+  picking a side.
+
+You can also delegate in natural language: *"codex-reviewer한테 이 diff 검토시켜줘."*
+
+Both Codex agents are drivers, not implementers. They hand a self-contained spec to
+`codex exec`, then **independently verify** what came back — re-reading the changed
+files, re-running the tests, and dropping any review finding they cannot corroborate
+in the source. Codex's own claim that "tests pass" is never taken at face value.
+
+Sandboxing is enforced per role: `codex-worker` runs Codex with `-s workspace-write`
+(can edit files in the project, no network), `codex-reviewer` with `-s read-only`.
+Set `MMT_CODEX_MODEL` (or `MMT_CODEX_WORKER_MODEL` / `MMT_CODEX_REVIEWER_MODEL`) to
+pin a specific Codex model, and `MMT_CODEX_BIN` if the binary is not on `PATH`.
+
+> **Read-only caveat:** `reviewer` (Opus) has no `Bash` at all, so it *cannot* mutate
+> anything. `codex-reviewer` needs `Bash` to launch the Codex CLI, so its read-only
+> guarantee comes from Codex's own sandbox plus its instructions, not from the tool
+> allowlist. When you want the hard guarantee, use `reviewer`.
 
 ---
 
@@ -160,13 +207,17 @@ multi-model-team/
 │   ├── plugin.json          # plugin metadata
 │   └── marketplace.json     # self-referencing marketplace for local install
 ├── agents/
-│   ├── reasoner.md      # model: opus, effort: max
-│   ├── worker.md        # model: sonnet, effort: medium
-│   └── reviewer.md      # model: opus, effort: high, read-only
+│   ├── reasoner.md       # model: opus, effort: max
+│   ├── worker.md         # model: sonnet, effort: medium
+│   ├── reviewer.md       # model: opus, effort: high, read-only
+│   ├── codex-worker.md   # drives `codex exec` (workspace-write)
+│   └── codex-reviewer.md # drives `codex exec review` (read-only)
+├── scripts/
+│   └── codex-run.js     # Codex CLI wrapper — binary lookup, sandbox, timeout, output
 ├── skills/
 │   └── orchestration-protocol/SKILL.md   # role-separation rules, auto-trigger
 ├── commands/
-│   ├── orchestrate.md        # /orchestrate <task> [--plan-only]
+│   ├── orchestrate.md        # /orchestrate <task> [--plan-only] [--codex] [--cross-review]
 │   ├── orchestrator-model.md # /orchestrator-model [opus|fable]
 │   └── team-status.md        # /team-status
 ├── hooks/

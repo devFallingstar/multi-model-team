@@ -11,6 +11,24 @@ const path = require('path');
 const base = process.env.CLAUDE_PROJECT_DIR || '.';
 const settingsFile = path.join(base, '.claude', 'settings.local.json');
 
+// codex CLI 존재 여부를 PATH 스캔으로만 판별한다 (프로세스를 띄우지 않아 세션 시작이 느려지지 않음).
+function hasCodex() {
+  if (process.env.MMT_CODEX_BIN) return fs.existsSync(process.env.MMT_CODEX_BIN);
+  const exts = process.platform === 'win32'
+    ? (process.env.PATHEXT || '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean)
+    : [''];
+  for (const dir of (process.env.PATH || '').split(path.delimiter).filter(Boolean)) {
+    for (const ext of exts) {
+      try {
+        if (fs.statSync(path.join(dir, 'codex' + ext.toLowerCase())).isFile()) return true;
+      } catch (e) {
+        /* 다음 후보 */
+      }
+    }
+  }
+  return false;
+}
+
 let model = '';
 let effort = '';
 try {
@@ -37,7 +55,16 @@ if (model) {
 lines.push('  reasoner              : Opus 고정 서브에이전트 (어려운 디버깅 / 알고리즘·아키텍처 설계)');
 lines.push('  worker                : Sonnet 고정 서브에이전트 (보일러플레이트 / 테스트 / 포맷팅 / 단순 수정)');
 lines.push('  reviewer              : Opus 고정 읽기 전용 서브에이전트 (커밋 전 diff 검토 — 정확성/엣지케이스/보안)');
+
+if (hasCodex()) {
+  lines.push('  codex-worker          : OpenAI Codex CLI 직접 호출 (worker와 같은 작업을 다른 모델 계열로)');
+  lines.push('  codex-reviewer        : OpenAI Codex CLI 직접 호출 (읽기 전용 교차 리뷰)');
+} else {
+  lines.push('  codex-worker/reviewer : 비활성 — Codex CLI 미설치 (npm i -g @openai/codex && codex login)');
+}
+
 lines.push('');
 lines.push('  큰 작업은 /orchestrate <작업 설명> 으로 시작하면 계획->분배->종합 순서로 진행됩니다.');
+lines.push('  Codex에 위임하려면 /orchestrate --codex <작업>, 교차 리뷰는 --cross-review 를 붙이세요.');
 
 process.stdout.write(lines.join('\n') + '\n');

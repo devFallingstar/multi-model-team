@@ -28,5 +28,24 @@ jobs:
       - name: Hook syntax check
         run: node --check hooks/session-start-reminder.js
 
+      - name: Codex runner syntax check
+        run: node --check scripts/codex-run.js
+
       - name: Hook smoke test
         run: node hooks/session-start-reminder.js
+
+      - name: Codex runner smoke test (no codex installed)
+        env:
+          MMT_CODEX_BIN: /nonexistent/codex
+        run: |
+          # codex 미설치 환경에서 --check 는 NOT_FOUND + exit 2 여야 한다.
+          status=0
+          node scripts/codex-run.js --check || status=$?
+          test "$status" -eq 2 || { echo "expected exit 2, got $status"; exit 1; }
+
+          # 잘못된 role 은 usage 오류(exit 1).
+          status=0
+          node scripts/codex-run.js --role bogus </dev/null || status=$?
+          test "$status" -eq 1 || { echo "expected exit 1, got $status"; exit 1; }
+
+          echo "codex-run.js error paths OK"
